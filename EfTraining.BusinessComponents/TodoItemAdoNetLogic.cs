@@ -337,7 +337,16 @@ namespace MyCompany.EfTraining.BusinessComponents
                                 var command = new SqlCommand(commandText, connection);
                                 command.Parameters.AddWithValue("@Id", item.Id);
                                 command.Parameters.AddWithValue("@Sorting", item.Sorting);
-                                command.Parameters.AddWithValue("@Description", item.Description);
+                                object DescriptionVal = null; //workaround to solve nullable field update exception if it's null.
+                                if (item.Description != null)
+                                {
+                                    DescriptionVal = item.Description;
+                                }
+                                else
+                                {
+                                    DescriptionVal = DBNull.Value;
+                                }
+                                command.Parameters.AddWithValue("@Description", DescriptionVal);
                                 command.Parameters.AddWithValue("@IsDefault", item.IsDefault);
                                 command.Parameters.AddWithValue("@UpdatedDate", item.UpdatedDate);
                                 command.Parameters.AddWithValue("@Version", item.Version);
@@ -354,7 +363,16 @@ namespace MyCompany.EfTraining.BusinessComponents
                                 command.Parameters.AddWithValue("@Description", item.Description);
                                 command.Parameters.AddWithValue("@IsDefault", item.IsDefault);
                                 command.Parameters.AddWithValue("@CreatedDate", item.CreatedDate);
-                                command.Parameters.AddWithValue("@UpdatedDate", item.UpdatedDate);
+                                object UpdatedDateVal = null; //workaround to solve nullable field update exception if it's null.
+                                if (item.UpdatedDate != null)
+                                {
+                                    UpdatedDateVal = item.UpdatedDate;
+                                }
+                                else
+                                {
+                                    UpdatedDateVal = DBNull.Value;
+                                }
+                                command.Parameters.AddWithValue("@UpdatedDate", UpdatedDateVal);
                                 command.Parameters.AddWithValue("@Version", item.Version);
                                 affectedRows += command.ExecuteNonQuery();
                             }
