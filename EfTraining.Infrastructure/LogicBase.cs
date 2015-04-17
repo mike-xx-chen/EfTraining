@@ -34,6 +34,11 @@ namespace MyCompany.EfTraining.Infrastructure
             return null;
         }
 
+        public virtual TEntity GetItemByKey(int key)
+        {
+            return GetItem(e => e.Id == key);
+        }
+
         /// <summary>
         /// Gets a item via a condition.
         /// </summary>

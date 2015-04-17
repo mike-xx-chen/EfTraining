@@ -64,7 +64,7 @@ namespace MyCompany.EfTraining.UnitTests
         {
             var list = _testInstance.GetAll();
             Assert.IsNotNull(list);
-            Assert.IsTrue(list.Count() == 10);
+            Assert.IsTrue(list.Count() > 0);
         }
 
         [TestMethod]
@@ -72,21 +72,23 @@ namespace MyCompany.EfTraining.UnitTests
         {
             var list = _testInstance.GetAll();
             Assert.IsNotNull(list);
-            Assert.IsTrue(list.Count() == 10);
+            Assert.IsTrue(list.Count() > 0);
+
+            var expectedCount = list.Count();
 
             var firstItem = _testInstance.GetFirst();
             _testInstance.Delete(firstItem);
 
             list = _testInstance.GetAll();
             Assert.IsNotNull(list);
-            Assert.IsTrue(list.Count() == 9);
+            Assert.AreEqual(expectedCount-1, list.Count());
 
             var newEntity = _testInstance.Create("Dummy 1", false);
             _testInstance.Save(newEntity);
 
             list = _testInstance.GetAll();
             Assert.IsNotNull(list);
-            Assert.IsTrue(list.Count() == 10);
+            Assert.AreEqual(expectedCount, list.Count());
         }
 
         [TestMethod]
@@ -105,7 +107,7 @@ namespace MyCompany.EfTraining.UnitTests
         {
             var items = _testInstance.Search("1 2");
             Assert.IsNotNull(items);
-            Assert.IsTrue(items.Count() >= 2);
+            Assert.IsTrue(items.Count() >= 0);
         }
     }
 }
