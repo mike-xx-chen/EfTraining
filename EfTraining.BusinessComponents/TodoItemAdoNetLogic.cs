@@ -171,21 +171,6 @@ namespace MyCompany.EfTraining.BusinessComponents
         }
 
         /// <summary>
-        /// Gets a list of items via a certain condition.
-        /// </summary>
-        /// <param name="predicate"></param>
-        /// <returns></returns>
-        //public virtual IEnumerable<TodoItemEntity> GetItems(Expression<Func<TodoItemEntity, bool>> predicate)
-        //{
-        //    using (var context = new TContext())
-        //    {
-        //        return context.Set<TEntity>()
-        //                      .Where(predicate)
-        //                      .ToList();
-        //    }
-        //}
-
-        /// <summary>
         /// As the name implied, gets all of items.
         /// </summary>
         /// <returns></returns>
