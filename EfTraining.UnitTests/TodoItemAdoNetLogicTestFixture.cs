@@ -86,7 +86,7 @@ namespace MyCompany.EfTraining.UnitTests
         public void SaveTest()
         {
             var lastItem = _testInstance.GetLast();
-            var expected = lastItem.Description = lastItem.Description + " Hello again!";
+            var expected = lastItem.Description = lastItem.Description + " Hello!";
             _testInstance.Save(lastItem);
             var result = _testInstance.GetItemByKey(lastItem.Id);
             Assert.AreEqual(expected, result.Description);

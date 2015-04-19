@@ -45,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataRecordExtension.cs" />
     <Compile Include="ISequenceManager.cs" />
     <Compile Include="SequenceManagerFactory.cs" />
     <Compile Include="DbContextExtension.cs" />

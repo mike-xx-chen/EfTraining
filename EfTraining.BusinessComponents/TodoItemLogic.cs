@@ -119,6 +119,11 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// <returns></returns>
         public override IEnumerable<TodoItemEntity> Search(string searchText)
         {
+            if (string.IsNullOrEmpty(searchText) || string.IsNullOrWhiteSpace(searchText))
+            {
+                throw new ArgumentNullException("searchText");
+            }
+
             using (var context = new TrainingDbContext())
             {
                char[] charSeparators = new char[] { ' ' };
@@ -137,13 +142,6 @@ namespace MyCompany.EfTraining.BusinessComponents
                     return false;
                };
 
-//#if DEBUG
-//               Debug.Write(context.Set<TodoItemEntity>()
-//                     .Where(predicate)
-//                     .OrderBy(e => e.Sorting)
-//                     .ThenBy(e => e.Id));
-//               Debug.Flush();
-//#endif
                return context.Set<TodoItemEntity>()
                       .Where(predicate)
                       .OrderBy(e=>e.Sorting)

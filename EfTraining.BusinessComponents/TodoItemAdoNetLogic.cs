@@ -1,6 +1,7 @@
 ﻿using MyCompany.EfTraining.Infrastructure;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Linq;
@@ -12,20 +13,15 @@ namespace MyCompany.EfTraining.BusinessComponents
 {
     public class TodoItemAdoNetLogic : LogicBase
     {
-        private const string CONNECTION_STRING =@"data source=.\two;initial catalog=Training;integrated security=True";//"server=.\two;integrated security=SSPI;database=Training";
+        private const string CONNECTION_STRING =@"data source=.;initial catalog=Training;integrated security=True";//"server=.\two;integrated security=SSPI;database=Training";
 
         /// <summary>
         /// As the name implied, gets the first item.
         /// </summary>
         /// <returns></returns>
-        public virtual TodoItemEntity GetFirst()
-        {
-            try
-            {
-                using (var connection = new SqlConnection(CONNECTION_STRING))
-               {
-                   connection.Open();
-                   var commandText = "SELECT TOP (1)" +
+        public TodoItemEntity GetFirst()
+        {                 
+            var commandText = "SELECT TOP (1)" +
                                     "[Extent1].[ID] AS [ID]," +
                                     "[Extent1].[SORTING] AS [SORTING], " +
                                     "[Extent1].[DESCRIPTION] AS [DESCRIPTION]," +
@@ -35,37 +31,98 @@ namespace MyCompany.EfTraining.BusinessComponents
                                     "[Extent1].[VERSION] AS [VERSION]" + 
                                     "FROM [dbo].[BAS_TODOITEM] AS [Extent1]" +
                                     "ORDER BY [Extent1].[SORTING] ASC, [Extent1].[ID] ASC";
-                   var command = new SqlCommand(commandText, connection);
-                   var reader = command.ExecuteReader();
-                   TodoItemEntity entity = null;
-                   if(reader.Read())
-                   {
-                       entity = new TodoItemEntity();
-                       entity.Id = (Int32)reader["ID"];
-                       entity.Sorting = (Int32)reader["SORTING"];
-                       entity.Description = (string)reader["DESCRIPTION"];
-                       entity.IsDefault = (bool)reader["ISDEFAULT"];
-                       entity.CreatedDate = (DateTime)reader["CREATEDDATE"];
-                       if (!reader.IsDBNull(reader.GetOrdinal("UPDATEDDATE")))
-                       {
-                           entity.UpdatedDate = (DateTime?)reader["UPDATEDDATE"];
-                       }
 
-                       entity.Version = (int)(reader["VERSION"]);
-                   }
+            return GetItem(commandText);
+        }
 
-                    if(!reader.IsClosed)
+        /// <summary>
+        /// Get an item.
+        /// </summary>
+        /// <param name="commandText">The Sql text</param>
+        /// <param name="parameters">The Sql parameters</param>
+        /// <returns></returns>
+        public TodoItemEntity GetItem(string commandText, IDictionary<string, object> parameters = null)
+        {
+            TodoItemEntity entity = null;
+
+            try
+            {
+                using (var connection = new SqlConnection(CONNECTION_STRING))
+                {
+                    connection.Open();
+                    var command = new SqlCommand(commandText, connection);
+                    if (parameters != null)
+                    {
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.AddWithValue(param.Key, param.Value);
+                        }
+                    }
+
+                    var reader = command.ExecuteReader();
+                    
+                    if (reader.Read())
+                    {
+                        entity = Create(reader);
+                    }
+
+                    if (!reader.IsClosed)
+                    {
+                        reader.Close();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            return entity;
+        }
+
+        /// <summary>
+        /// Gets a list of items.
+        /// </summary>
+        /// <param name="commandText">The Sql text</param>
+        /// <param name="parameters">The Sql parameters</param>
+        /// <returns></returns>
+        public IEnumerable<TodoItemEntity> GetItems(string commandText, IDictionary<string, object> parameters = null)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(CONNECTION_STRING))
+                {
+                    connection.Open();
+                    var command = new SqlCommand(commandText, connection);
+                    var reader = command.ExecuteReader();
+                    if (parameters != null)
+                    {
+                        foreach (var param in parameters)
+                        {
+                            command.Parameters.AddWithValue(param.Key, param.Value);
+                        }
+                    }
+
+                    List<TodoItemEntity> entities = new List<TodoItemEntity>();
+                    while (reader.Read())
+                    {
+                        var entity = Create(reader);
+                        entities.Add(entity);
+                    }
+
+                    if (!reader.IsClosed)
                     {
                         reader.Close();
                     }
 
-                   return entity;
-               }
+                    return entities;
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
 
             }
+
             return null;
         }
 
@@ -73,55 +130,20 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// As the name implied, gets the last item.
         /// </summary>
         /// <returns></returns>
-        public virtual TodoItemEntity GetLast()
+        public TodoItemEntity GetLast()
         {
-            try
-            {
-                using (var connection = new SqlConnection(CONNECTION_STRING))
-                {
-                    connection.Open();
-                    var commandText = "SELECT TOP (1)" +
-                                     "[Extent1].[ID] AS [ID]," +
-                                     "[Extent1].[SORTING] AS [SORTING], " +
-                                     "[Extent1].[DESCRIPTION] AS [DESCRIPTION]," +
-                                     "[Extent1].[ISDEFAULT] AS [ISDEFAULT], " +
-                                     "[Extent1].[CREATEDDATE] AS [CREATEDDATE]," +
-                                     "[Extent1].[UPDATEDDATE] AS [UPDATEDDATE], " +
-                                     "[Extent1].[VERSION] AS [VERSION]" +
-                                     "FROM [dbo].[BAS_TODOITEM] AS [Extent1]" +
-                                     "ORDER BY [Extent1].[SORTING] DESC, [Extent1].[ID] DESC";
-                    var command = new SqlCommand(commandText, connection);
-                    var reader = command.ExecuteReader();
-                    TodoItemEntity entity = null;
-                    if (reader.Read())
-                    {
-                        entity = new TodoItemEntity();
-                        entity.Id = (Int32)reader["ID"];
-                        entity.Sorting = (Int32)reader["SORTING"];
-                        entity.Description = (string)reader["DESCRIPTION"];
-                        entity.IsDefault = (bool)reader["ISDEFAULT"];
-                        entity.CreatedDate = (DateTime)reader["CREATEDDATE"];
-                        if (!reader.IsDBNull(reader.GetOrdinal("UPDATEDDATE")))
-                        {
-                            entity.UpdatedDate = (DateTime?)reader["UPDATEDDATE"];
-                        }
+            var commandText = "SELECT TOP (1)" +
+                 "[Extent1].[ID] AS [ID]," +
+                 "[Extent1].[SORTING] AS [SORTING], " +
+                 "[Extent1].[DESCRIPTION] AS [DESCRIPTION]," +
+                 "[Extent1].[ISDEFAULT] AS [ISDEFAULT], " +
+                 "[Extent1].[CREATEDDATE] AS [CREATEDDATE]," +
+                 "[Extent1].[UPDATEDDATE] AS [UPDATEDDATE], " +
+                 "[Extent1].[VERSION] AS [VERSION]" +
+                 "FROM [dbo].[BAS_TODOITEM] AS [Extent1]" +
+                 "ORDER BY [Extent1].[SORTING] DESC, [Extent1].[ID] DESC";
 
-                        entity.Version = (int)(reader["VERSION"]);
-                    }
-
-                    if (!reader.IsClosed)
-                    {
-                        reader.Close();
-                    }
-
-                    return entity;
-                }
-            }
-            catch (Exception e)
-            {
-
-            }
-            return null;
+            return GetItem(commandText);
         }
 
         /// <summary>
@@ -129,14 +151,9 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// </summary>
         /// <param name="predicate"></param>
         /// <returns></returns>
-        public virtual TodoItemEntity GetItemByKey(int key)
-        {
-            try
-            {
-                using (var connection = new SqlConnection(CONNECTION_STRING))
-                {
-                    connection.Open();
-                    var commandText = "SELECT TOP (1)" +
+        public TodoItemEntity GetItemByKey(int key)
+        { 
+            var commandText = "SELECT TOP (1)" +
                                      "[Extent1].[ID] AS [ID]," +
                                      "[Extent1].[SORTING] AS [SORTING], " +
                                      "[Extent1].[DESCRIPTION] AS [DESCRIPTION]," +
@@ -145,40 +162,12 @@ namespace MyCompany.EfTraining.BusinessComponents
                                      "[Extent1].[UPDATEDDATE] AS [UPDATEDDATE], " +
                                      "[Extent1].[VERSION] AS [VERSION]" +
                                      "FROM [dbo].[BAS_TODOITEM] AS [Extent1]" +
-                                     "WHERE [Extent1].[ID] = @ID";
-                    var command = new SqlCommand(commandText, connection);
-                    command.Parameters.AddWithValue("ID", key);
-                    var reader = command.ExecuteReader();
-                    TodoItemEntity entity = null;
-                    if (reader.Read())
-                    {
-                        entity = new TodoItemEntity();
-                        entity.Id = (Int32)reader["ID"];
-                        entity.Sorting = (Int32)reader["SORTING"];
-                        entity.Description = (string)reader["DESCRIPTION"];
-                        entity.IsDefault = (bool)reader["ISDEFAULT"];
-                        entity.CreatedDate = (DateTime)reader["CREATEDDATE"];
-                        if (!reader.IsDBNull(reader.GetOrdinal("UPDATEDDATE")))
-                        {
-                            entity.UpdatedDate = (DateTime?)reader["UPDATEDDATE"];
-                        }
+                                     "WHERE [Extent1].[ID] = @Id";
 
-                        entity.Version = (int)(reader["VERSION"]);
-                    }
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
+            parameters.Add("@Id", key);
 
-                    if (!reader.IsClosed)
-                    {
-                        reader.Close();
-                    }
-
-                    return entity;
-                }
-            }
-            catch (Exception e)
-            {
-
-            }
-            return null;
+            return GetItem(commandText, parameters);
         }
 
         /// <summary>
@@ -200,112 +189,40 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// As the name implied, gets all of items.
         /// </summary>
         /// <returns></returns>
-        public virtual IEnumerable<TodoItemEntity> GetAll()
+        public IEnumerable<TodoItemEntity> GetAll()
         {
-            try
-            {
-                using (var connection = new SqlConnection(CONNECTION_STRING))
-                {
-                    connection.Open();
-                    var commandText = "SELECT" +
-                                     "[Extent1].[ID] AS [ID]," +
-                                     "[Extent1].[SORTING] AS [SORTING], " +
-                                     "[Extent1].[DESCRIPTION] AS [DESCRIPTION]," +
-                                     "[Extent1].[ISDEFAULT] AS [ISDEFAULT], " +
-                                     "[Extent1].[CREATEDDATE] AS [CREATEDDATE]," +
-                                     "[Extent1].[UPDATEDDATE] AS [UPDATEDDATE], " +
-                                     "[Extent1].[VERSION] AS [VERSION]" +
-                                     "FROM [dbo].[BAS_TODOITEM] AS [Extent1]" +
-                                     "ORDER BY [Extent1].[SORTING] ASC, [Extent1].[ID] ASC";
-                    var command = new SqlCommand(commandText, connection);
-                    var reader = command.ExecuteReader();
-                    List<TodoItemEntity> entities = new List<TodoItemEntity>();
-                    while (reader.Read())
-                    {
-                        TodoItemEntity entity = new TodoItemEntity();
-                        entity.Id = (Int32)reader["ID"];
-                        entity.Sorting = (Int32)reader["SORTING"];
-                        entity.Description = (string)reader["DESCRIPTION"];
-                        entity.IsDefault = (bool)reader["ISDEFAULT"];
-                        entity.CreatedDate = (DateTime)reader["CREATEDDATE"];
-                        if (!reader.IsDBNull(reader.GetOrdinal("UPDATEDDATE")))
-                        {
-                            entity.UpdatedDate = (DateTime?)reader["UPDATEDDATE"];
-                        }
+            var commandText = "SELECT" +
+                                "[Extent1].[ID] AS [ID]," +
+                                "[Extent1].[SORTING] AS [SORTING], " +
+                                "[Extent1].[DESCRIPTION] AS [DESCRIPTION]," +
+                                "[Extent1].[ISDEFAULT] AS [ISDEFAULT], " +
+                                "[Extent1].[CREATEDDATE] AS [CREATEDDATE]," +
+                                "[Extent1].[UPDATEDDATE] AS [UPDATEDDATE], " +
+                                "[Extent1].[VERSION] AS [VERSION]" +
+                                "FROM [dbo].[BAS_TODOITEM] AS [Extent1]" +
+                                "ORDER BY [Extent1].[SORTING] ASC, [Extent1].[ID] ASC";
 
-                        entity.Version = (int)(reader["VERSION"]);
-                        entities.Add(entity);
-                    }
-
-                    if (!reader.IsClosed)
-                    {
-                        reader.Close();
-                    }
-
-                    return entities;
-                }
-            }
-            catch (Exception e)
-            {
-
-            }
-            return null;
+            return GetItems(commandText);
         }
 
         /// <summary>
         /// AS the name implied, gets the default item.
         /// </summary>
         /// <returns></returns>
-        public virtual TodoItemEntity GetDefault()
+        public TodoItemEntity GetDefault()
         {
-            try
-            {
-                using (var connection = new SqlConnection(CONNECTION_STRING))
-                {
-                    connection.Open();
-                    var commandText = "SELECT TOP (1)" +
-                                     "[Extent1].[ID] AS [ID]," +
-                                     "[Extent1].[SORTING] AS [SORTING], " +
-                                     "[Extent1].[DESCRIPTION] AS [DESCRIPTION]," +
-                                     "[Extent1].[ISDEFAULT] AS [ISDEFAULT], " +
-                                     "[Extent1].[CREATEDDATE] AS [CREATEDDATE]," +
-                                     "[Extent1].[UPDATEDDATE] AS [UPDATEDDATE], " +
-                                     "[Extent1].[VERSION] AS [VERSION]" +
-                                     "FROM [dbo].[BAS_TODOITEM] AS [Extent1]" +
-                                     "ORDER BY [Extent1].[ISDEFAULT] DESC, [Extent1].[SORTING] ASC, [Extent1].[ID] ASC";
-                    var command = new SqlCommand(commandText, connection);
-                    var reader = command.ExecuteReader();
-                    TodoItemEntity entity = null;
-                    if (reader.Read())
-                    {
-                        entity = new TodoItemEntity();
-                        entity.Id = (Int32)reader["ID"];
-                        entity.Sorting = (Int32)reader["SORTING"];
-                        entity.Description = (string)reader["DESCRIPTION"];
-                        entity.IsDefault = (bool)reader["ISDEFAULT"];
-                        entity.CreatedDate = (DateTime)reader["CREATEDDATE"];
-                        if (!reader.IsDBNull(reader.GetOrdinal("UPDATEDDATE")))
-                        {
-                            entity.UpdatedDate = (DateTime?)reader["UPDATEDDATE"];
-                        }
+            var commandText = "SELECT TOP (1)" +
+                             "[Extent1].[ID] AS [ID]," +
+                             "[Extent1].[SORTING] AS [SORTING], " +
+                             "[Extent1].[DESCRIPTION] AS [DESCRIPTION]," +
+                             "[Extent1].[ISDEFAULT] AS [ISDEFAULT], " +
+                             "[Extent1].[CREATEDDATE] AS [CREATEDDATE]," +
+                             "[Extent1].[UPDATEDDATE] AS [UPDATEDDATE], " +
+                             "[Extent1].[VERSION] AS [VERSION]" +
+                             "FROM [dbo].[BAS_TODOITEM] AS [Extent1]" +
+                             "ORDER BY [Extent1].[ISDEFAULT] DESC, [Extent1].[SORTING] ASC, [Extent1].[ID] ASC";
 
-                        entity.Version = (int)(reader["VERSION"]);
-                    }
-
-                    if (!reader.IsClosed)
-                    {
-                        reader.Close();
-                    }
-
-                    return entity;
-                }
-            }
-            catch (Exception e)
-            {
-
-            }
-
-            return null;
+            return GetItem(commandText);
         }
 
         /// <summary>
@@ -313,7 +230,7 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// </summary>
         /// <param name="entities"></param>
         /// <returns></returns>
-        public virtual bool Save(IEnumerable<TodoItemEntity> entities)
+        public bool Save(IEnumerable<TodoItemEntity> entities)
         {
             bool retVal =  false;
             int affectedRows = 0;
@@ -396,7 +313,7 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        public virtual bool Save(TodoItemEntity entity)
+        public bool Save(TodoItemEntity entity)
         {
             return Save(new List<TodoItemEntity>() { entity });
         }
@@ -405,7 +322,7 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// Deletes the incoming items.
         /// </summary>
         /// <param name="entities"></param>
-        public virtual void Delete(IEnumerable<TodoItemEntity> entities)
+        public void Delete(IEnumerable<TodoItemEntity> entities)
         {
             Delete(entities.Select(e => e.Id).ToList());
         }
@@ -414,7 +331,7 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// Deletes the incoming item.
         /// </summary>
         /// <param name="entity"></param>
-        public virtual void Delete(TodoItemEntity entity)
+        public void Delete(TodoItemEntity entity)
         {
             Delete(entity.Id);
         }
@@ -423,7 +340,7 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// Deletes the item by id.
         /// </summary>
         /// <param name="id"></param>
-        public virtual void Delete(int id)
+        public void Delete(int id)
         {
             Delete(new List<int>() { id });
         }
@@ -432,7 +349,7 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// Deletes a list of items by id.
         /// </summary>
         /// <param name="ids"></param>
-        public virtual void Delete(IEnumerable<int> ids)
+        public void Delete(IEnumerable<int> ids)
         {
             try
             {
@@ -467,8 +384,15 @@ namespace MyCompany.EfTraining.BusinessComponents
         /// </summary>
         /// <param name="searchText"></param>
         /// <returns></returns>
-        public virtual IEnumerable<TodoItemEntity> Search(string searchText)
+        public IEnumerable<TodoItemEntity> Search(string searchText)
         {
+            if (string.IsNullOrEmpty(searchText) || string.IsNullOrWhiteSpace(searchText))
+            {
+                throw new ArgumentNullException("searchText");
+            }
+
+            searchText = searchText.Trim();
+
             var charSeparators = new Char[]{' '};
             var keywords = searchText.Split(charSeparators, StringSplitOptions.RemoveEmptyEntries);
             StringBuilder whereClause = new StringBuilder();
@@ -510,18 +434,7 @@ namespace MyCompany.EfTraining.BusinessComponents
                     List<TodoItemEntity> entities = new List<TodoItemEntity>();
                     while (reader.Read())
                     {
-                        TodoItemEntity entity = new TodoItemEntity();
-                        entity.Id = (Int32)reader["ID"];
-                        entity.Sorting = (Int32)reader["SORTING"];
-                        entity.Description = (string)reader["DESCRIPTION"];
-                        entity.IsDefault = (bool)reader["ISDEFAULT"];
-                        entity.CreatedDate = (DateTime)reader["CREATEDDATE"];
-                        if (!reader.IsDBNull(reader.GetOrdinal("UPDATEDDATE")))
-                        {
-                            entity.UpdatedDate = (DateTime?)reader["UPDATEDDATE"];
-                        }
-
-                        entity.Version = (int)(reader["VERSION"]);
+                        TodoItemEntity entity = Create(reader);
                         entities.Add(entity);
                     }
 
@@ -559,6 +472,21 @@ namespace MyCompany.EfTraining.BusinessComponents
                 IsDefault = isDefault,
                 Sorting = sorting,
             };
+        }
+
+        private TodoItemEntity Create(IDataRecord record)
+        {
+            var entity = new TodoItemEntity();
+
+            entity.Id = record.GetInt32("ID");
+            entity.Sorting = record.GetInt32("SORTING");
+            entity.Description = record.GetString("DESCRIPTION");
+            entity.IsDefault = record.GetBoolean("ISDEFAULT");
+            entity.CreatedDate = record.GetDateTime("CREATEDDATE");
+            entity.UpdatedDate = record.GetNullableDateTime("UPDATEDDATE");
+            entity.Version = record.GetInt32("VERSION");
+
+            return entity;
         }
     }
 }
